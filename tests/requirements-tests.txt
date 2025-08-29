@@ -1,0 +1,7 @@
+requests==2.32.3
+pytest==8.2.1
+pytest-xdist==3.6.1
+pytest-rerunfailures==14.0
+hypothesis==6.112.5
+neo4j==5.23.0
+python-dotenv==1.0.1

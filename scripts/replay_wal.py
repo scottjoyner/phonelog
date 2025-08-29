@@ -8,7 +8,6 @@ def iter_events(wal_dir: str) -> Iterator[Dict[str, Any]]:
     p = pathlib.Path(wal_dir)
     if not p.exists():
         return
-    # Sort by filename to roughly preserve time
     for f in sorted(p.glob("events-*.ndjson.gz")):
         with gzip.open(f, "rt", encoding="utf-8") as fh:
             for line in fh:
@@ -28,9 +27,7 @@ def main():
     ap.add_argument("--only-v1", action="store_true", help="ignore /api/v0 legacy entries")
     args = ap.parse_args()
 
-    processed = 0
-    ingested = 0
-    dropped  = 0
+    processed = ingested = dropped = 0
 
     for ev in iter_events(args.wal_dir):
         if args.limit and processed >= args.limit:
@@ -41,7 +38,6 @@ def main():
         if payload is None:
             continue
 
-        # /api/v1 structure with locations; /api/v0 is raw
         locations = []
         default_user = payload.get("user_id") or settings.DEFAULT_USER_ID
         default_device = payload.get("device_id")
@@ -51,7 +47,6 @@ def main():
         else:
             if args.only_v1:
                 continue
-            # try single location at top-level in v0
             locations = [payload]
 
         normalized: List[Dict[str, Any]] = []
@@ -73,7 +68,6 @@ def main():
                 upsert_phonelog(rec)
                 ingested += 1
             except Exception as e:
-                # Keep going; WAL remains intact for future replays
                 print(f"Upsert failed: {e}", file=sys.stderr)
 
     print(json.dumps({"processed": processed, "ingested": ingested, "dropped": dropped}))

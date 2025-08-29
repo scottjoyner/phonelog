@@ -5,7 +5,6 @@ timeout = 60
 graceful_timeout = 30
 loglevel = "info"
 
-
 # Prometheus multiprocess cleanup
 try:
     from prometheus_client import multiprocess

@@ -9,12 +9,10 @@ services:
     environment:
       - PROMETHEUS_MULTIPROC_DIR=/prom
       - PROM_CLEAN_ON_START=1
-    volumes:
-      - ./data:/data
-      - prom-metrics:/prom
     ports: ["8888:8000"]
     volumes:
       - ./data:/data
+      - prom-metrics:/prom
     depends_on:
       - neo4j
 
@@ -42,3 +40,4 @@ services:
 volumes:
   neo4j-data: {}
   neo4j-logs: {}
+  prom-metrics: {}

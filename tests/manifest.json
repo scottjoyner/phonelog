@@ -1,0 +1,72 @@
+{
+  "cases": [
+    {
+      "file": "v1_min_valid.json",
+      "endpoint": "/api/v1/locations",
+      "expect_status": 200,
+      "expect_min_ingested": 1,
+      "expect_min_dropped": 0
+    },
+    {
+      "file": "v1_mixed_types.json",
+      "endpoint": "/api/v1/locations",
+      "expect_status": 200,
+      "expect_min_ingested": 1,
+      "expect_min_dropped": 0
+    },
+    {
+      "file": "v1_stringified_props_geom.json",
+      "endpoint": "/api/v1/locations",
+      "expect_status": 200,
+      "expect_min_ingested": 1,
+      "expect_min_dropped": 0
+    },
+    {
+      "file": "v1_missing_coords.json",
+      "endpoint": "/api/v1/locations",
+      "expect_status": 200,
+      "expect_min_ingested": 1,
+      "expect_min_dropped": 1
+    },
+    {
+      "file": "v1_bad_json_values.json",
+      "endpoint": "/api/v1/locations",
+      "expect_status": 200,
+      "expect_min_ingested": 1,
+      "expect_min_dropped": 0
+    },
+    {
+      "file": "v1_large_batch.json",
+      "endpoint": "/api/v1/locations",
+      "expect_status": 200,
+      "expect_min_ingested": 100,
+      "expect_min_dropped": 0
+    },
+    {
+      "file": "v1_motion_array.json",
+      "endpoint": "/api/v1/locations",
+      "expect_status": 200,
+      "expect_min_ingested": 1,
+      "expect_min_dropped": 0
+    },
+    {
+      "file": "v1_extra_fields.json",
+      "endpoint": "/api/v1/locations",
+      "expect_status": 200,
+      "expect_min_ingested": 1,
+      "expect_min_dropped": 0
+    },
+    {
+      "file": "v0_single_point.json",
+      "endpoint": "/api/v0",
+      "expect_status": 200
+    },
+    {
+      "file": "v1_strings_boolish.json",
+      "endpoint": "/api/v1/locations",
+      "expect_status": 200,
+      "expect_min_ingested": 1,
+      "expect_min_dropped": 0
+    }
+  ]
+}

@@ -3,5 +3,4 @@ uvicorn==0.30.6
 gunicorn==22.0.0
 neo4j==5.23.0
 pydantic==1.10.17
-
 prometheus_client==0.20.0

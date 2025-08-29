@@ -1,0 +1,11 @@
+{
+  "user_id": "kipnerter",
+  "device_id": "iphone-14",
+  "locations": [
+    {
+      "type": "Feature",
+      "geometry": "{'type':'Point','coordinates':[-73.99, 40.75]}",
+      "properties": "{'timestamp':'2023-12-28T17:11:25Z','battery_state':'charging','deferred': True,'desired_accuracy':5,'altitude': 12.3, 'wifi': None}"
+    }
+  ]
+}

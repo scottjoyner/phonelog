@@ -1,0 +1,14 @@
+{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -73.99,
+      40.7
+    ]
+  },
+  "properties": {
+    "timestamp": "2024-07-07T07:07:07Z",
+    "speed": 0.0
+  }
+}

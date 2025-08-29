@@ -1,0 +1,24 @@
+{
+  "user_id": "kipnerter",
+  "device_id": "iphone-14",
+  "locations": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.96,
+          40.72
+        ]
+      },
+      "properties": {
+        "timestamp": "2024-05-05T05:05:05Z",
+        "motion": [
+          "walking",
+          "unknown"
+        ],
+        "vertical_accuracy": 3.3
+      }
+    }
+  ]
+}

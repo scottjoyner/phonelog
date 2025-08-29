@@ -1,0 +1,27 @@
+{
+  "user_id": "kipnerter",
+  "device_id": "iphone-14",
+  "request_id": "abc-123",
+  "debug": true,
+  "locations": [
+    {
+      "type": "Feature",
+      "foo": "bar",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.95,
+          40.71
+        ],
+        "altitude": 20
+      },
+      "properties": {
+        "timestamp": "2024-06-06T06:06:06Z",
+        "custom": {
+          "k": "v"
+        },
+        "desired_accuracy": 10
+      }
+    }
+  ]
+}

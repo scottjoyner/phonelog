@@ -9,12 +9,12 @@ from .models import IngestPayload
 from .normalizer import normalize_one
 from .db import upsert_phonelog, get_driver
 from . import metrics
+from prometheus_client import generate_latest
 
 app = FastAPI(title=settings.APP_NAME)
 configure_logging(settings.LOG_LEVEL)
 log = logging.getLogger("app")
 
-# CORS permissive by default (tighten in prod)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -23,47 +23,39 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# X-Request-ID middleware
 @app.middleware("http")
 async def add_request_id(request: Request, call_next):
     req_id = request.headers.get("x-request-id") or str(uuid.uuid4())
     start = time.time()
-    response: Response
     try:
         response = await call_next(request)
-    except Exception as e:
+    except Exception:
         log.exception("Unhandled error")
-        # metrics for 500 as well
         path = request.url.path
         method = request.method
         metrics.REQUESTS.labels(path=path, method=method, status="500").inc()
         metrics.REQ_LATENCY.labels(path=path, method=method).observe(time.time()-start)
         return JSONResponse(status_code=500, content={"result": "error", "reason": "internal"})
     duration = time.time()-start
-    duration_ms = int(duration*1000)
     response.headers["x-request-id"] = req_id
-    # Metrics
     path = request.url.path
     method = request.method
     metrics.REQUESTS.labels(path=path, method=method, status=str(response.status_code)).inc()
     metrics.REQ_LATENCY.labels(path=path, method=method).observe(duration)
-    log.info(json.dumps({"event":"request","path":path,"status":response.status_code,"ms":duration_ms,"rid":req_id}))
+    log.info(json.dumps({"event":"request","path":path,"status":response.status_code,"ms":int(duration*1000),"rid":req_id}))
     return response
 
-# WAL writer with rotation
 class WalWriter:
     def __init__(self, root: str, rotate_bytes: int):
         self.root = pathlib.Path(root)
         self.root.mkdir(parents=True, exist_ok=True)
         self.rotate_bytes = rotate_bytes
         self._cur = None
-
     def _open(self):
         ts = time.strftime("%Y%m%d-%H%M%S")
         path = self.root / f"events-{ts}.ndjson.gz"
         self._cur = (path, gzip.open(path, "at", encoding="utf-8"))
         log.info(f"WAL opened {path}")
-
     def write(self, obj: Dict[str, Any]):
         if self._cur is None:
             self._open()
@@ -83,12 +75,16 @@ wal = WalWriter(settings.WAL_DIR, settings.WAL_ROTATE_BYTES)
 
 @app.on_event("startup")
 def _startup():
-    get_driver()  # fail fast if DB not reachable
+    get_driver()
     log.info("Startup complete")
 
 @app.get("/healthz")
 def healthz():
     return {"status": "ok"}
+
+@app.get("/metrics")
+def metrics_endpoint():
+    return Response(generate_latest(metrics.registry), media_type="text/plain; version=0.0.4; charset=utf-8")
 
 @app.post("/api/v1/locations")
 async def create_locations(payload: IngestPayload, request: Request):
@@ -132,10 +128,3 @@ async def handle_location_data_compat(req: Request):
     data = await req.json()
     wal.write({"received_at": int(time.time()*1000), "payload": data, "api": "v0"})
     return {"result": "ok"}
-
-
-@app.get("/metrics")
-def metrics_endpoint():
-    from prometheus_client import generate_latest
-    from prometheus_client import generate_latest
-    return Response(generate_latest(metrics.registry), media_type=metrics.CONTENT_TYPE_LATEST)
