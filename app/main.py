@@ -8,6 +8,7 @@ from .logging_conf import configure_logging
 from .models import IngestPayload
 from .normalizer import normalize_one
 from .db import upsert_phonelog, get_driver
+from . import metrics
 
 app = FastAPI(title=settings.APP_NAME)
 configure_logging(settings.LOG_LEVEL)
@@ -32,10 +33,21 @@ async def add_request_id(request: Request, call_next):
         response = await call_next(request)
     except Exception as e:
         log.exception("Unhandled error")
+        # metrics for 500 as well
+        path = request.url.path
+        method = request.method
+        metrics.REQUESTS.labels(path=path, method=method, status="500").inc()
+        metrics.REQ_LATENCY.labels(path=path, method=method).observe(time.time()-start)
         return JSONResponse(status_code=500, content={"result": "error", "reason": "internal"})
-    duration_ms = int((time.time()-start)*1000)
+    duration = time.time()-start
+    duration_ms = int(duration*1000)
     response.headers["x-request-id"] = req_id
-    log.info(json.dumps({"event":"request","path":request.url.path,"status":response.status_code,"ms":duration_ms,"rid":req_id}))
+    # Metrics
+    path = request.url.path
+    method = request.method
+    metrics.REQUESTS.labels(path=path, method=method, status=str(response.status_code)).inc()
+    metrics.REQ_LATENCY.labels(path=path, method=method).observe(duration)
+    log.info(json.dumps({"event":"request","path":path,"status":response.status_code,"ms":duration_ms,"rid":req_id}))
     return response
 
 # WAL writer with rotation
@@ -106,9 +118,13 @@ async def create_locations(payload: IngestPayload, request: Request):
             uid = upsert_phonelog(rec)
             uids.append(uid)
         except Exception:
+            metrics.DB_FAILURES.inc()
             log.exception("Neo4j upsert failed")
             return JSONResponse(status_code=500, content={"result": "error", "reason": "db failure"})
 
+    metrics.INGESTED_POINTS.inc(len(uids))
+    if dropped:
+        metrics.DROPPED_POINTS.inc(dropped)
     return {"result": "ok", "ingested": len(uids), "dropped": dropped, "uids": uids}
 
 @app.post("/api/v0")
@@ -116,3 +132,10 @@ async def handle_location_data_compat(req: Request):
     data = await req.json()
     wal.write({"received_at": int(time.time()*1000), "payload": data, "api": "v0"})
     return {"result": "ok"}
+
+
+@app.get("/metrics")
+def metrics_endpoint():
+    from prometheus_client import generate_latest
+    from prometheus_client import generate_latest
+    return Response(generate_latest(metrics.registry), media_type=metrics.CONTENT_TYPE_LATEST)

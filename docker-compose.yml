@@ -6,6 +6,12 @@ services:
       dockerfile: docker/Dockerfile
     container_name: phone-log-api
     env_file: .env
+    environment:
+      - PROMETHEUS_MULTIPROC_DIR=/prom
+      - PROM_CLEAN_ON_START=1
+    volumes:
+      - ./data:/data
+      - prom-metrics:/prom
     ports: ["8888:8000"]
     volumes:
       - ./data:/data

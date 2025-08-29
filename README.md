@@ -38,3 +38,23 @@ Options: `--dry-run`, `--limit`, `--only-v1`
 - `scripts/apply_schema.py` — runs `db/schema.cypher`
 - `scripts/run_normalize.py` — executes `db/phlog_normalize.cypher` (APOC)
 - `scripts/replay_wal.py` — replays WAL into Neo4j
+
+
+## Prometheus Metrics
+
+- Scrape `http://<host>:8888/metrics`
+- Using Gunicorn, metrics run in **multiprocess** mode. `docker-compose.yml` sets:
+  - `PROMETHEUS_MULTIPROC_DIR=/prom`
+  - `PROM_CLEAN_ON_START=1` (cleans stale metrics files on boot)
+
+## WAL Maintenance
+
+Prune files older than 14 days (archive instead of delete):
+```bash
+python3 -m scripts.wal_prune prune --wal-dir ./data/wal --keep-days 14 --archive-dir ./data/wal_archive
+```
+
+Compact small files into a single gz (and delete originals):
+```bash
+python3 -m scripts.wal_prune compact --wal-dir ./data/wal --max-compact-size 5000000 --delete-originals
+```
